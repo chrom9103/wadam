@@ -1,5 +1,7 @@
 
 import React from 'react'
+import Header from '../../components/Header'
+import Footer from '../../components/Footer'
 
 export default function SchedulePage() {
   const rows = [
@@ -105,8 +107,11 @@ export default function SchedulePage() {
   }
 
   return (
-    <main style={styles.page}>
-      <section style={styles.card}>
+    <>
+      <Header />
+
+      <main style={styles.page}>
+        <section style={styles.card}>
         <header style={styles.header}>
           <div style={styles.title}>志賀高原 行程表</div>
           <div style={styles.subtitle}>縦型タイムラインで時間に沿った行程を表示しています</div>
@@ -152,7 +157,10 @@ export default function SchedulePage() {
         </div>
 
         <div style={styles.footNote}>※ 時刻は目安です。道路状況により変動します。</div>
-      </section>
-    </main>
+        </section>
+      </main>
+      
+      <Footer />
+    </>
   )
 }

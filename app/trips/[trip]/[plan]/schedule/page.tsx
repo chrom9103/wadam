@@ -1,6 +1,7 @@
 import React from 'react'
 import Header from '../../../../components/Header'
 import Footer from '../../../../components/Footer'
+import CurrentTimeMarker from '../../../../components/CurrentTimeMarker'
 
 // Dynamic route page: /trips/[trip]/[plan]/schedule
 export default async function SchedulePage({ params }: { params: Promise<{ trip: string; plan: string }> | { trip: string; plan: string } }) {
@@ -166,7 +167,7 @@ export default async function SchedulePage({ params }: { params: Promise<{ trip:
             <div style={styles.subtitle}>縦型タイムラインで時間に沿った行程を表示しています</div>
           </header>
 
-          <div style={styles.timeline}>
+          <div id="timeline-container" style={styles.timeline}>
             <div style={styles.line} />
             {(() => {
               const nodes: React.ReactNode[] = []
@@ -228,6 +229,8 @@ export default async function SchedulePage({ params }: { params: Promise<{ trip:
               })
               return nodes
             })()}
+            {/* Current time marker (client component) - pass timestamps */}
+            <CurrentTimeMarker items={displayItems.map((d) => ({ id: d.id, timestamp: d.date ? `${d.date}T${d.times.length ? d.times[0].time : '00:00'}:00` : null }))} />
           </div>
 
           <div style={styles.footNote}>※ 時刻は目安です。道路状況により変動します。</div>

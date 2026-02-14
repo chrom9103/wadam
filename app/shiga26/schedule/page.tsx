@@ -4,33 +4,52 @@ import Header from '../../components/Header'
 import Footer from '../../components/Footer'
 
 export default function SchedulePage() {
-  const rows = [
-    { item: 'ニッポンレンタカー町田駅店', dep: '7:10', pass: '', arr: '', note: '' },
-    { item: '相模原愛川IC', dep: '', pass: '7:50', arr: '', note: '' },
-    { item: '八王子JCT', dep: '', pass: '8:05', arr: '', note: '' },
-    { item: '双葉SA', dep: '9:35', pass: '', arr: '9:05', note: '' },
-    { item: '岡谷JCT', dep: '', pass: '10:25', arr: '', note: '' },
-    { item: '更埴JCT', dep: '', pass: '11:15', arr: '', note: '' },
-    { item: '松代PA', dep: '12:20', pass: '', arr: '11:20', note: '' },
-    { item: '信州中野IC', dep: '', pass: '12:35', arr: '', note: '' },
-    { item: '志賀高原', dep: '', pass: '', arr: '', note: '' },
+  // データベース（ER 設計）から取得すると想定するモックデータ
+
+  const trips = [
+    { id: 'trip-1', title: '志賀高原旅行', start_date: '2026-02-14', end_date: '2026-02-15', created_by: 'user-1' },
   ]
 
-  // groupsMap: 同じアイテム名ごとに Set で時刻を集めるための Map
-  // key: アイテム名, value: { item, times: Set<時刻文字列>, note }
-  // ここで dep/pass/arr の時刻を重複無しで収集する
-  const groupsMap = new Map<string, { item: string; times: Set<string>; note?: string }>()
-  rows.forEach((r) => {
-    const key = r.item
-    if (!groupsMap.has(key)) groupsMap.set(key, { item: r.item, times: new Set<string>(), note: r.note })
-    const g = groupsMap.get(key)!
-    if (r.dep) g.times.add(r.dep)
-    if (r.pass) g.times.add(r.pass)
-    if (r.arr) g.times.add(r.arr)
-  })
+  const plans = [
+    { id: 'plan-1', trip_id: 'trip-1', title: 'デフォルトプラン', is_default: true },
+  ]
 
-  // groups: groupsMap の内容を配列に変換（times はソート済みの配列に変換）
-  const groups = Array.from(groupsMap.values()).map((g) => ({ item: g.item, times: Array.from(g.times).sort(), note: g.note }))
+  // ITINERARY_ITEMS を想定したモック。schema に合わせて start_time/end_time を ISO 文字列で保持
+  const itineraryItems = [
+    { id: 'it-1', plan_id: 'plan-1', is_selected: true, category: 'transport', title: 'ニッポンレンタカー町田駅店', sort_order: 1, start_time: '2026-02-14T07:10:00', end_time: null, estimated_cost: 3000, note: 'レンタカー受取', address: '町田駅', metadata: {} },
+    { id: 'it-2', plan_id: 'plan-1', is_selected: true, category: 'pass', title: '相模原愛川IC', sort_order: 2, start_time: '2026-02-14T07:50:00', end_time: null, estimated_cost: 0, note: '', address: '', metadata: {} },
+    { id: 'it-3', plan_id: 'plan-1', is_selected: true, category: 'pass', title: '八王子JCT', sort_order: 3, start_time: '2026-02-14T08:05:00', end_time: null, estimated_cost: 0, note: '', address: '', metadata: {} },
+    { id: 'it-4', plan_id: 'plan-1', is_selected: true, category: 'spot', title: '双葉SA', sort_order: 4, start_time: '2026-02-14T09:35:00', end_time: '2026-02-14T09:05:00', estimated_cost: 800, note: 'トイレ・休憩', address: '', metadata: {} },
+    { id: 'it-5', plan_id: 'plan-1', is_selected: true, category: 'pass', title: '岡谷JCT', sort_order: 5, start_time: '2026-02-14T10:25:00', end_time: null, estimated_cost: 0, note: '', address: '', metadata: {} },
+    { id: 'it-6', plan_id: 'plan-1', is_selected: true, category: 'pass', title: '更埴JCT', sort_order: 6, start_time: '2026-02-14T11:15:00', end_time: null, estimated_cost: 0, note: '', address: '', metadata: {} },
+    { id: 'it-7', plan_id: 'plan-1', is_selected: true, category: 'spot', title: '松代PA', sort_order: 7, start_time: '2026-02-14T12:20:00', end_time: '2026-02-14T11:20:00', estimated_cost: 600, note: '昼食', address: '', metadata: {} },
+    { id: 'it-8', plan_id: 'plan-1', is_selected: true, category: 'pass', title: '信州中野IC', sort_order: 8, start_time: '2026-02-14T12:35:00', end_time: null, estimated_cost: 0, note: '', address: '', metadata: {} },
+    { id: 'it-9', plan_id: 'plan-1', is_selected: true, category: 'spot', title: '志賀高原', sort_order: 9, start_time: null, end_time: null, estimated_cost: 0, note: '到着・観光', address: '', metadata: {} },
+  ]
+
+  // groupsMap: 同じアイテム名ごとに Set で時刻を集める Map
+  const groupsMap = new Map<string, { item: string; times: Set<string>; note?: string }>()
+  const fmtTime = (iso: string | null) => {
+    if (!iso) return null
+    try {
+      const d = new Date(iso)
+      const hh = String(d.getHours()).padStart(2, '0')
+      const mm = String(d.getMinutes()).padStart(2, '0')
+      return `${hh}:${mm}`
+    } catch {
+      return null
+    }
+  }
+
+  itineraryItems.forEach((it) => {
+    const key = it.title
+    if (!groupsMap.has(key)) groupsMap.set(key, { item: key, times: new Set<string>(), note: it.note })
+    const g = groupsMap.get(key)!
+    const s = fmtTime(it.start_time)
+    const e = fmtTime(it.end_time)
+    if (s) g.times.add(s)
+    if (e) g.times.add(e)
+  })
 
   // toMinutes: "HH:MM" 形式の文字列を分単位の数値に変換
   function toMinutes(t: string) {
@@ -44,11 +63,13 @@ export default function SchedulePage() {
     const g = groupsMap.get(key)!
     const timesSet = g.times
     const labeled: { time: string; label: string }[] = []
-    rows.forEach((r) => {
-      if (r.item !== key) return
-      if (r.dep && timesSet.has(r.dep)) labeled.push({ time: r.dep, label: '発' })
-      if (r.pass && timesSet.has(r.pass)) labeled.push({ time: r.pass, label: '通過' })
-      if (r.arr && timesSet.has(r.arr)) labeled.push({ time: r.arr, label: '着' })
+    // itineraryItems を走査してラベル（発/着）を復元
+    itineraryItems.forEach((it) => {
+      if (it.title !== key) return
+      const s = fmtTime(it.start_time)
+      const e = fmtTime(it.end_time)
+      if (s && timesSet.has(s)) labeled.push({ time: s, label: '発' })
+      if (e && timesSet.has(e)) labeled.push({ time: e, label: '着' })
     })
     // remove duplicates (同一ラベルと時刻の重複を排除)
     const uniq = Array.from(new Map(labeled.map((t) => [t.label + '|' + t.time, t])).values())
@@ -61,12 +82,6 @@ export default function SchedulePage() {
   groupsWithLabels.sort((a, b) => {
     const aMin = a.times.length ? Math.min(...a.times.map((t) => toMinutes(t.time))) : Number.MAX_SAFE_INTEGER
     const bMin = b.times.length ? Math.min(...b.times.map((t) => toMinutes(t.time))) : Number.MAX_SAFE_INTEGER
-    return aMin - bMin
-  })
-
-  groups.sort((a, b) => {
-    const aMin = a.times.length ? Math.min(...a.times.map(toMinutes)) : Number.MAX_SAFE_INTEGER
-    const bMin = b.times.length ? Math.min(...b.times.map(toMinutes)) : Number.MAX_SAFE_INTEGER
     return aMin - bMin
   })
 

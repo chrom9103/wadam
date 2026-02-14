@@ -63,12 +63,15 @@ export default function SchedulePage() {
     const g = groupsMap.get(key)!
     const timesSet = g.times
     const labeled: { time: string; label: string }[] = []
-    // itineraryItems を走査してラベル（発/着）を復元
+    // itineraryItems を走査してラベル（発/通過/着）を復元
     itineraryItems.forEach((it) => {
       if (it.title !== key) return
       const s = fmtTime(it.start_time)
       const e = fmtTime(it.end_time)
-      if (s && timesSet.has(s)) labeled.push({ time: s, label: '発' })
+      if (s && timesSet.has(s)) {
+        const startLabel = it.category === 'pass' ? '通過' : '発'
+        labeled.push({ time: s, label: startLabel })
+      }
       if (e && timesSet.has(e)) labeled.push({ time: e, label: '着' })
     })
     // remove duplicates (同一ラベルと時刻の重複を排除)

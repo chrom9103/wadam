@@ -1,14 +1,16 @@
 "use client"
 import { useState } from "react"
+import { fetchJson } from "../lib/http"
+import type { Share } from "../types"
 
 export type CreateExpensePayload = {
   trip_id: string
   title: string
   amount: number
   paid_at?: string
-  payer_id: string
-  shares: { user_id: string; amount_owed: number }[]
+  shares: Share[]
   itinerary_item_id?: string | null
+  receipt_path?: string
 }
 
 export default function useCreateExpense() {
@@ -19,21 +21,14 @@ export default function useCreateExpense() {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch(`/api/expenses`, {
+      return await fetchJson<{ id: string }>(`/api/expenses`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       })
-
-      if (!res.ok) {
-        const text = await res.text()
-        const message = text || `HTTP ${res.status}`
-        setError(message)
-        throw new Error(message)
-      }
-
-      const data = await res.json()
-      return data
+    } catch (err: any) {
+      setError(err?.message ?? String(err))
+      throw err
     } finally {
       setLoading(false)
     }

@@ -1,7 +1,7 @@
 "use client"
 import { useState, useEffect } from "react"
-
-export type Member = { id: string; name: string }
+import { fetchJson } from "../lib/http"
+import type { Member } from "../types"
 
 export default function useMembers(tripId?: string) {
   const [members, setMembers] = useState<Member[]>([])
@@ -9,27 +9,30 @@ export default function useMembers(tripId?: string) {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    const controller = new AbortController()
+
     if (!tripId) {
       setMembers([])
       setLoading(false)
-      return
+      setError(null)
+      return () => controller.abort()
     }
 
     setLoading(true)
     setError(null)
 
-    fetch(`/api/trips/${tripId}/members`)
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`)
-        return res.json()
+    fetchJson<{ members: Member[] }>(`/api/trips/${tripId}/members`, {
+      signal: controller.signal,
+    })
+      .then((data) => setMembers(data.members ?? []))
+      .catch((err) => {
+        if (err?.name !== "AbortError") {
+          setError(err?.message ?? String(err))
+        }
       })
-      .then((data) => {
-        // expect { members: [{id,name}, ...] } or array
-        if (Array.isArray(data)) setMembers(data)
-        else setMembers(data.members ?? [])
-      })
-      .catch((err) => setError(err?.message ?? String(err)))
       .finally(() => setLoading(false))
+
+    return () => controller.abort()
   }, [tripId])
 
   return { members, loading, error }

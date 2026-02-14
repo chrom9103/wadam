@@ -8,20 +8,24 @@ export default function useCurrentUser() {
   const [loading, setLoading] = useState<boolean>(true)
 
   useEffect(() => {
+    let mounted = true
     const supabase = createClient()
-    
-    // Get initial session
+
     supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!mounted) return
       setUser(user)
       setLoading(false)
     })
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!mounted) return
       setUser(session?.user ?? null)
     })
 
-    return () => subscription.unsubscribe()
+    return () => {
+      mounted = false
+      subscription.unsubscribe()
+    }
   }, [])
 
   return { user, loading }

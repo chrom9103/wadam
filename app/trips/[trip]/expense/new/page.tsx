@@ -1,22 +1,38 @@
 "use client"
 import React from "react"
 import ExpenseForm from "../../../../components/expense/ExpenseForm"
+import useMembers from "../../../../hooks/useMembers"
+import useCreateExpense from "../../../../hooks/useCreateExpense"
 
 type Props = {
   params: { trip: string }
 }
 
-// simple members stub. Replace with real data fetch in integration.
-const sampleMembers = [
-  { id: "u1", name: "Alice" },
-  { id: "u2", name: "Bob" },
-  { id: "u3", name: "Charlie" },
-]
-
 export default function ExpenseNewPage({ params }: Props) {
+  const { members, loading, error } = useMembers(params.trip)
+  const { createExpense, loading: creating } = useCreateExpense()
+
   return (
     <div className="p-4">
-      <ExpenseForm tripId={params.trip} members={sampleMembers} onSubmit={(p)=>console.log(p)} />
+      {loading ? (
+        <p>メンバーを読み込み中...</p>
+      ) : error ? (
+        <p className="text-red-600">メンバーの取得に失敗しました: {error}</p>
+      ) : (
+        <ExpenseForm
+          tripId={params.trip}
+          members={members}
+          onSubmit={async (p) => {
+            try {
+              await createExpense(p)
+              // simple success feedback
+              alert("支出を作成しました")
+            } catch (err: any) {
+              alert("作成に失敗しました: " + (err?.message ?? String(err)))
+            }
+          }}
+        />
+      )}
     </div>
   )
 }

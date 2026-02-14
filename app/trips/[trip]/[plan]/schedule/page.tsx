@@ -111,7 +111,7 @@ export default async function SchedulePage({ params }: { params: Promise<{ trip:
     if (e) times.push({ time: e, label: '着' })
     // 日付は start_time から直接取得（transport 等 start_time が null の場合は null）
     const date = fmtDate(it.start_time)
-    return { id: `${it.id}-${it.sort_order}`, item: it.title, times, note: it.note, sort_order: it.sort_order, category: it.category, date }
+    return { id: `${it.id}-${it.sort_order}`, item: it.title, times, note: it.note, sort_order: it.sort_order, category: it.category, date, startTimeIso: it.start_time, endTimeIso: it.end_time }
   })
 
   // styles: インラインスタイルオブジェクト
@@ -187,14 +187,14 @@ export default async function SchedulePage({ params }: { params: Promise<{ trip:
 
                 if (g.category === 'transport') {
                   nodes.push(
-                    <div key={`item-${idx}`} style={styles.transportRow}>
+                    <div key={`item-${idx}`} style={styles.transportRow} data-timestamp={g.startTimeIso || undefined}>
                       <div style={styles.transportTime}>移動</div>
                       <div style={styles.transportText}>{g.item}</div>
                     </div>
                   )
                 } else {
                   nodes.push(
-                    <div key={`item-${idx}`} style={{ ...styles.row, margin: '18px 0' }}>
+                    <div key={`item-${idx}`} data-timestamp={g.startTimeIso || undefined} style={{ ...styles.row, margin: '18px 0' }}>
                       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                         {g.times.length ? (
                           g.times.length > 1 ? (
@@ -223,14 +223,17 @@ export default async function SchedulePage({ params }: { params: Promise<{ trip:
                           </div>
                         </div>
                       </div>
+                      {/* end_time がある場合、カード末尾にタイムスタンプを配置して補間精度を向上 */}
+                      {g.endTimeIso && <div data-timestamp={g.endTimeIso} style={{ height: 0, overflow: 'hidden' }} />}
                     </div>
                   )
                 }
               })
               return nodes
             })()}
-            {/* Current time marker (client component) - pass timestamps */}
-            <CurrentTimeMarker items={displayItems.map((d) => ({ id: d.id, timestamp: d.date ? `${d.date}T${d.times.length ? d.times[0].time : '00:00'}:00` : null }))} />
+            {/* Current time marker (client component) - DOM座標補間方式 */}
+            {/* テスト用: testNow に固定時刻を渡す。本番では testNow を削除して Date.now() を使用 */}
+            <CurrentTimeMarker containerId="timeline-container" testNow={new Date().toISOString()} />
           </div>
 
           <div style={styles.footNote}>※ 時刻は目安です。道路状況により変動します。</div>

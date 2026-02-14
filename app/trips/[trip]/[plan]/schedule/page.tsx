@@ -1,13 +1,14 @@
-
 import React from 'react'
-import Header from '../../components/Header'
-import Footer from '../../components/Footer'
+import Header from '../../../../components/Header'
+import Footer from '../../../../components/Footer'
 
-export default function SchedulePage() {
+// Dynamic route page: /trips/[trip]/[plan]/schedule
+export default async function SchedulePage({ params }: { params: Promise<{ trip: string; plan: string }> | { trip: string; plan: string } }) {
+  const { trip: tripSlug, plan: planId } = await params
+
   // データベース（ER 設計）から取得すると想定するモックデータ
-
   const trips = [
-    { id: 'trip-1', title: '志賀高原旅行', start_date: '2026-02-14', end_date: '2026-02-15', created_by: 'user-1' },
+    { id: 'trip-1', slug: 'shigaKogen-spr-2026', title: '志賀高原旅行', start_date: '2026-02-14', end_date: '2026-02-15', created_by: 'user-1' },
   ]
 
   const plans = [
@@ -28,7 +29,7 @@ export default function SchedulePage() {
   ]
 
   // groupsMap: 同じアイテム名ごとに Set で時刻を集める Map
-  const groupsMap = new Map<string, { item: string; times: Set<string>; note?: string }>()
+  const groupsMap = new Map<string, { id: string; item: string; times: Set<string>; note?: string; sort_order?: number }>()
   const fmtTime = (iso: string | null) => {
     if (!iso) return null
     try {
@@ -41,9 +42,10 @@ export default function SchedulePage() {
     }
   }
 
+  // グルーピングは title ではなく id をキーにしつつ、表示用に title を保持する
   itineraryItems.forEach((it) => {
-    const key = it.title
-    if (!groupsMap.has(key)) groupsMap.set(key, { item: key, times: new Set<string>(), note: it.note })
+    const key = it.id
+    if (!groupsMap.has(key)) groupsMap.set(key, { id: it.id, item: it.title, times: new Set<string>(), note: it.note, sort_order: it.sort_order })
     const g = groupsMap.get(key)!
     const s = fmtTime(it.start_time)
     const e = fmtTime(it.end_time)
@@ -51,40 +53,39 @@ export default function SchedulePage() {
     if (e) g.times.add(e)
   })
 
-  // toMinutes: "HH:MM" 形式の文字列を分単位の数値に変換
-  function toMinutes(t: string) {
-    const m = t.match(/^(\d{1,2}):(\d{2})$/)
-    if (!m) return Number.MAX_SAFE_INTEGER
-    return parseInt(m[1], 10) * 60 + parseInt(m[2], 10)
-  }
-
-  // groupsWithLabels: 元の rows 配列を走査して、各アイテムに対して発/通過/着ラベル付きの時刻配列を復元
-  const groupsWithLabels = Array.from(groupsMap.keys()).map((key) => {
-    const g = groupsMap.get(key)!
-    const timesSet = g.times
+  // groupsWithLabels: 各アイテムに対して、start_time は "発" または category によるラベルを付与、end_time は "着"
+  const groupsWithLabels = Array.from(groupsMap.values()).map((g) => {
     const labeled: { time: string; label: string }[] = []
-    // itineraryItems を走査してラベル（発/通過/着）を復元
+    // 元データからラベルを復元するため itineraryItems を検索
     itineraryItems.forEach((it) => {
-      if (it.title !== key) return
+      if (it.id !== g.id) return
       const s = fmtTime(it.start_time)
       const e = fmtTime(it.end_time)
-      if (s && timesSet.has(s)) {
+      if (s && g.times.has(s)) {
         const startLabel = it.category === 'pass' ? '通過' : '発'
         labeled.push({ time: s, label: startLabel })
       }
-      if (e && timesSet.has(e)) labeled.push({ time: e, label: '着' })
+      if (e && g.times.has(e)) labeled.push({ time: e, label: '着' })
     })
-    // remove duplicates (同一ラベルと時刻の重複を排除)
+    // 重複除去 + 時刻順ソート
     const uniq = Array.from(new Map(labeled.map((t) => [t.label + '|' + t.time, t])).values())
-    // 時刻順にソート
-    uniq.sort((a, b) => toMinutes(a.time) - toMinutes(b.time))
-    return { item: key, times: uniq, note: g.note }
+    uniq.sort((a, b) => {
+      const am = a.time.match(/^(\d{1,2}):(\d{2})$/)
+      const bm = b.time.match(/^(\d{1,2}):(\d{2})$/)
+      const av = am ? parseInt(am[1], 10) * 60 + parseInt(am[2], 10) : Number.MAX_SAFE_INTEGER
+      const bv = bm ? parseInt(bm[1], 10) * 60 + parseInt(bm[2], 10) : Number.MAX_SAFE_INTEGER
+      return av - bv
+    })
+    return { id: g.id, item: g.item, times: uniq, note: g.note, sort_order: g.sort_order }
   })
 
-  // groupsWithLabels を最も早い時刻でソートし、タイムラインを時間順に並べる
+  // sort_order がある場合はそれを優先し、無ければ最小時刻でソート
   groupsWithLabels.sort((a, b) => {
-    const aMin = a.times.length ? Math.min(...a.times.map((t) => toMinutes(t.time))) : Number.MAX_SAFE_INTEGER
-    const bMin = b.times.length ? Math.min(...b.times.map((t) => toMinutes(t.time))) : Number.MAX_SAFE_INTEGER
+    const aOrder = typeof a.sort_order === 'number' ? a.sort_order : Number.MAX_SAFE_INTEGER
+    const bOrder = typeof b.sort_order === 'number' ? b.sort_order : Number.MAX_SAFE_INTEGER
+    if (aOrder !== bOrder) return aOrder - bOrder
+    const aMin = a.times.length ? parseInt(a.times[0].time.split(':')[0], 10) * 60 + parseInt(a.times[0].time.split(':')[1], 10) : Number.MAX_SAFE_INTEGER
+    const bMin = b.times.length ? parseInt(b.times[0].time.split(':')[0], 10) * 60 + parseInt(b.times[0].time.split(':')[1], 10) : Number.MAX_SAFE_INTEGER
     return aMin - bMin
   })
 
@@ -111,13 +112,12 @@ export default function SchedulePage() {
     title: { fontSize: 20, fontWeight: 800, color: '#0f172a' },
     subtitle: { fontSize: 13, color: '#64748b' },
     timeline: { position: 'relative' as const, marginTop: 16, display: 'flex', flexDirection: 'column', gap: 6 },
-    row: { display: 'grid', gridTemplateColumns: '120px 1fr', gap: '0.5rem', alignItems: 'center' },
+    row: { display: 'grid', gridTemplateColumns: '140px 1fr', gap: '0.5rem', alignItems: 'center' },
     timeBubble: { display: 'inline-block', padding: '6px 10px', borderRadius: 999, background: '#eef2ff', color: '#3730a3', fontWeight: 700, fontSize: 13, minWidth: 56, textAlign: 'center' as const },
     timeStack: { display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: 6 },
     timeLine: { display: 'inline-block', padding: '4px 8px', borderRadius: 8, background: '#eef2ff', color: '#3730a3', fontWeight: 700, fontSize: 13, minWidth: 56, textAlign: 'center' as const },
-    line: { position: 'absolute' as const, left: 60, top: 12, bottom: 12, width: 2, background: 'linear-gradient(180deg,#c7d2fe,#e0e7ff)' },
+    line: { position: 'absolute' as const, left: 70, top: 12, bottom: 12, width: 2, background: 'linear-gradient(180deg,#c7d2fe,#e0e7ff)' },
     itemWrap: { paddingLeft: 24, position: 'relative' as const },
-    dot: { position: 'absolute' as const, left: -12, top: 12, width: 12, height: 12, borderRadius: 999, background: '#6366f1', boxShadow: '0 2px 8px rgba(99,102,241,0.18)' },
     cardItem: { background: '#fff', borderRadius: 10, padding: '10px 14px', boxShadow: '0 6px 18px rgba(2,6,23,0.04)', border: '1px solid rgba(2,6,23,0.04)' },
     itemTitle: { fontWeight: 700, color: '#0f172a', marginBottom: 6 },
     itemNote: { color: '#475569', fontSize: 13 },
@@ -130,51 +130,51 @@ export default function SchedulePage() {
 
       <main style={styles.page}>
         <section style={styles.card}>
-        <header style={styles.header}>
-          <div style={styles.title}>志賀高原 行程表</div>
-          <div style={styles.subtitle}>縦型タイムラインで時間に沿った行程を表示しています</div>
-        </header>
+          <header style={styles.header}>
+            <div style={styles.title}>{`トリップ: ${tripSlug} / プラン: ${planId}`}</div>
+            <div style={styles.subtitle}>縦型タイムラインで時間に沿った行程を表示しています</div>
+          </header>
 
-        <div style={styles.timeline}>
-          <div style={styles.line} />
-          {groupsWithLabels.map((g, idx) => (
-            <div key={idx} style={{ ...styles.row, margin: '18px 0' }}>
-              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                {g.times.length ? (
-                  g.times.length > 1 ? (
-                    <div style={styles.timeStack}>
-                      {g.times.map((t, i) => (
-                        <span key={i} style={styles.timeLine}>{t.time}</span>
-                      ))}
-                    </div>
-                  ) : (
-                    <span style={styles.timeBubble}>{g.times[0].time}</span>
-                  )
-                ) : (
-                  <span style={{ ...styles.timeBubble, background: '#f1f5f9', color: '#475569' }}>—</span>
-                )}
-              </div>
-
-              <div style={{ position: 'relative' }}>
-                <div style={styles.itemWrap}>
-                  <div style={styles.cardItem}>
-                    <div style={styles.itemTitle}>{g.item}</div>
-                    {g.times.length ? (
-                      <div style={styles.itemNote}>
+          <div style={styles.timeline}>
+            <div style={styles.line} />
+            {groupsWithLabels.map((g, idx) => (
+              <div key={g.id} style={{ ...styles.row, margin: '18px 0' }}>
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  {g.times.length ? (
+                    g.times.length > 1 ? (
+                      <div style={styles.timeStack}>
                         {g.times.map((t, i) => (
-                          <div key={i}>{t.label} {t.time}</div>
+                          <span key={i} style={styles.timeLine}>{t.time}</span>
                         ))}
                       </div>
-                    ) : null}
-                    {g.note ? <div style={styles.itemNote}>{g.note}</div> : null}
+                    ) : (
+                      <span style={styles.timeBubble}>{g.times[0].time}</span>
+                    )
+                  ) : (
+                    <span style={{ ...styles.timeBubble, background: '#f1f5f9', color: '#475569' }}>—</span>
+                  )}
+                </div>
+
+                <div style={{ position: 'relative' }}>
+                  <div style={styles.itemWrap}>
+                    <div style={styles.cardItem}>
+                      <div style={styles.itemTitle}>{g.item}</div>
+                      {g.times.length ? (
+                        <div style={styles.itemNote}>
+                          {g.times.map((t, i) => (
+                            <div key={i}>{t.label} {t.time}</div>
+                          ))}
+                        </div>
+                      ) : null}
+                      {g.note ? <div style={styles.itemNote}>{g.note}</div> : null}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
 
-        <div style={styles.footNote}>※ 時刻は目安です。道路状況により変動します。</div>
+          <div style={styles.footNote}>※ 時刻は目安です。道路状況により変動します。</div>
         </section>
       </main>
       

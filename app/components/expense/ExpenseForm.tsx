@@ -1,10 +1,11 @@
 "use client"
-import React, { useMemo } from "react"
+import React, { useMemo, useState, useEffect } from "react"
 import { useForm, Controller } from "react-hook-form"
 import * as z from "zod"
 import Input from "../ui/atoms/Input"
 import Button from "../ui/atoms/Button"
 import FormField from "../ui/molecules/FormField"
+import SplitSelector from "../ui/molecules/SplitSelector"
 import { distribute } from "../../lib/distribute"
 
 const schema = z.object({
@@ -36,15 +37,37 @@ export default function ExpenseForm({ tripId, members = [], onSubmit }: Props) {
     }
   })
 
+  const [shareInputs, setShareInputs] = useState<Record<string, number>>({})
+
+  // initialize shareInputs when members/participants change
+  const watchParticipantsRaw = watch("participants")
+  useEffect(() => {
+    const parts: string[] = watchParticipantsRaw || []
+    const next: Record<string, number> = { ...shareInputs }
+    parts.forEach((id) => {
+      if (!(id in next)) next[id] = 1
+    })
+    // remove stale
+    Object.keys(next).forEach((k) => { if (!parts.includes(k)) delete next[k] })
+    setShareInputs(next)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [watchParticipantsRaw])
+
   const watchAmount = watch("amount")
   const watchParticipants = watch("participants")
   const watchSplit = watch("splitMethod")
   const watchPayer = watch("payer_id")
 
   const computedShares = useMemo(() => {
-    const shares = (watchParticipants || []).map((id: string) => ({ user_id: id, ratio: 1 }))
-    return distribute(Number(watchAmount || 0), shares, watchSplit as any, watchPayer)
-  }, [watchAmount, watchParticipants, watchSplit, watchPayer])
+    const parts: string[] = watchParticipants || []
+    let shares = parts.map((id) => ({ user_id: id, ratio: 1 }))
+    if ((watchSplit as string) === "ratio") {
+      shares = parts.map((id) => ({ user_id: id, ratio: shareInputs[id] ?? 1 }))
+    } else if ((watchSplit as string) === "fixed") {
+      shares = parts.map((id) => ({ user_id: id, fixed: shareInputs[id] ?? 0 })) as any
+    }
+    return distribute(Number(watchAmount || 0), shares as any, watchSplit as any, watchPayer)
+  }, [watchAmount, watchParticipants, watchSplit, watchPayer, shareInputs])
 
   const submit = handleSubmit(async (data) => {
     // validate with zod here to avoid requiring @hookform/resolvers
@@ -124,6 +147,13 @@ export default function ExpenseForm({ tripId, members = [], onSubmit }: Props) {
           <label className="inline-flex items-center gap-2"><input type="radio" value="fixed" {...register("splitMethod")} /> 固定額</label>
         </div>
       </FormField>
+
+      <SplitSelector
+        participants={(watchParticipants || []).map((id: string) => ({ id, name: members.find(m => m.id === id)?.name ?? id }))}
+        method={watchSplit as any}
+        values={shareInputs}
+        onChange={(userId, value) => setShareInputs((s) => ({ ...s, [userId]: value }))}
+      />
 
       <div className="mb-4">
         <h3 className="text-sm font-medium mb-2">自動計算された負担額</h3>

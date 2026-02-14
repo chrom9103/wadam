@@ -43,6 +43,9 @@ export default function Header() {
         <Link href="/">
           <h1 className="title">Wadam</h1>
         </Link>
+        <Link href="/trips/expense/new" className="ml-4 px-3 py-1 bg-teal-500 text-white rounded-md hover:bg-teal-600 text-sm">
+          支出を追加
+        </Link>
       </div>
 
       <div className="right">

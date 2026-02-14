@@ -2,15 +2,11 @@
 
 import React from "react"
 import { useRouter } from "next/navigation"
-import ExpenseForm from "../../../../components/expense/ExpenseForm"
-import useMyTrips from "../../../../hooks/useMyTrips"
-import useCreateExpense from "../../../../hooks/useCreateExpense"
+import ExpenseForm from "../../../components/expense/ExpenseForm"
+import useMyTrips from "../../../hooks/useMyTrips"
+import useCreateExpense from "../../../hooks/useCreateExpense"
 
-type Props = {
-  params: { trip: string }
-}
-
-export default function ExpenseNewPage({ params }: Props) {
+export default function ExpenseNewPage() {
   const router = useRouter()
   const { trips, loading: tripsLoading } = useMyTrips()
   const { createExpense, loading: creating } = useCreateExpense()
@@ -20,7 +16,6 @@ export default function ExpenseNewPage({ params }: Props) {
       <ExpenseForm
         trips={trips}
         tripsLoading={tripsLoading}
-        initialTripId={params.trip}
         onSubmit={async (p) => {
           try {
             await createExpense(p)

@@ -146,12 +146,12 @@ export default async function SchedulePage({ params }: { params: Promise<{ trip:
     itemNote: { color: '#475569', fontSize: 13 },
     footNote: { marginTop: 14, color: '#94a3b8', fontSize: 13 },
     // transport-specific styles
-    transportRow: { display: 'grid', gridTemplateColumns: '140px 1fr', gap: '0.5rem', alignItems: 'center', margin: '12px 0' },
+    transportRow: { display: 'grid', gridTemplateColumns: '140px 1fr', gap: '0.5rem', alignItems: 'center'},
     transportTime: { color: '#64748b', fontSize: 13, display: 'flex', justifyContent: 'flex-end' },
     transportText: { color: '#475569', fontSize: 14, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0 },
-    divider: { gridColumn: '1 / -1', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '12px 0' },
+    divider: { gridColumn: '1 / -1', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '32px 0' },
     dividerLine: { height: 1, background: '#e6eef8', width: '100%' },
-    dividerLabel: { position: 'absolute', background: '#fff', padding: '4px 12px', borderRadius: 999, color: '#64748b', fontSize: 13, border: '1px solid #eef2ff' },
+    dividerLabel: { position: 'absolute', background: '#fff', padding: '6px 16px', borderRadius: 999, color: '#0f172a', fontSize: 15, fontWeight: 700, border: '1px solid rgba(15,23,42,0.06)' },
   }
 
   return (

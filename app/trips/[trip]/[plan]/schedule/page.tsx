@@ -7,15 +7,6 @@ import CurrentTimeMarker from '../../../../components/CurrentTimeMarker'
 export default async function SchedulePage({ params }: { params: Promise<{ trip: string; plan: string }> | { trip: string; plan: string } }) {
   const { trip: tripSlug, plan: planId } = await params
 
-  // データベース（ER 設計）から取得すると想定するモックデータ
-  const trips = [
-    { id: 'trip-1', slug: 'shigaKogen-spr-2026', title: '志賀高原旅行', start_date: '2026-02-16', end_date: '2026-02-20', created_by: 'user-1' },
-  ]
-
-  const plans = [
-    { id: 'plan-1', trip_id: 'trip-1', title: 'デフォルトプラン', is_default: true },
-  ]
-
   // ITINERARY_ITEMS を想定したモック。schema に合わせて start_time/end_time を ISO 文字列で保持
   const itineraryItems = [
     { id: 'it-1', plan_id: 'plan-1', is_selected: true, category: 'spot', title: 'ニッポンレンタカー町田駅店', sort_order: 1, start_time: '2026-02-16T07:10:00', end_time: null, estimated_cost: 3000, note: 'レンタカー受取', address: '町田駅', metadata: {} },

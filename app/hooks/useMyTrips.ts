@@ -10,9 +10,6 @@ export default function useMyTrips() {
 
   useEffect(() => {
     const controller = new AbortController()
-    setLoading(true)
-    setError(null)
-
     fetchJson<{ trips: Trip[] }>("/api/trips/my", { signal: controller.signal })
       .then((data) => setTrips(data.trips ?? []))
       .catch((err) => {

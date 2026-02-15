@@ -35,6 +35,7 @@ export default function AccountForm({ user }: { user: User | null }) {
         setAvatarUrl(data.avatar_url)
       }
     } catch (error) {
+      console.error('Error loading user data:', error)
       alert('Error loading user data!')
     } finally {
       setLoading(false)
@@ -68,6 +69,7 @@ export default function AccountForm({ user }: { user: User | null }) {
       if (error) throw error
       alert('Profile updated!')
     } catch (error) {
+      console.error('Error updating the data:', error)
       alert('Error updating the data!')
     } finally {
       setLoading(false)

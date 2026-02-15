@@ -30,8 +30,9 @@ export default function ExpenseNewPage({ params }: Props) {
           try {
             await createExpense(p)
             router.push(`/trips/${p.trip_id}`)
-          } catch (err: any) {
-            alert("作成に失敗しました: " + (err?.message ?? String(err)))
+          } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : String(err)
+            alert("作成に失敗しました: " + message)
           }
         }}
       />

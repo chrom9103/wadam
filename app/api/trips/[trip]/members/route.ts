@@ -2,6 +2,21 @@ import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import type { Member } from "@/app/types"
 
+type TripMemberRow = {
+  profiles: {
+    id: string
+    display_name: string | null
+    avatar_url: string | null
+  }[] | null
+}
+
+function isTripMemberRow(value: unknown): value is TripMemberRow {
+  if (!value || typeof value !== "object") return false
+  if (!("profiles" in value)) return false
+  const profiles = (value as { profiles?: unknown }).profiles
+  return profiles == null || Array.isArray(profiles)
+}
+
 export async function GET(req: Request, { params }: { params: { trip: string } }) {
   const { trip } = await params
   const supabase = await createClient()
@@ -35,13 +50,13 @@ export async function GET(req: Request, { params }: { params: { trip: string } }
 
   if (rowsErr) return NextResponse.json({ error: rowsErr.message }, { status: 500 })
 
-  const members: Member[] = (rows || [])
-    .map((r: any) => r.profiles)
-    .filter(Boolean)
-    .map((p: any) => ({
-      id: p.id,
-      name: p.display_name ?? "",
-      avatar_url: p.avatar_url ?? null,
+  const members: Member[] = (Array.isArray(rows) ? rows : [])
+    .filter(isTripMemberRow)
+    .flatMap((row) => row.profiles ?? [])
+    .map((profile) => ({
+      id: profile.id,
+      name: profile.display_name ?? "",
+      avatar_url: profile.avatar_url ?? null,
     }))
 
   return NextResponse.json({ members })

@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wadam
+spec:
+  selector:
+    matchLabels:
+      app: wadam
+  template:
+    metadata:
+      labels:
+        app: wadam
+    spec:
+      containers:
+      - name: wadam
+        image: wadam
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 3000

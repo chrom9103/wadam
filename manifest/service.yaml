@@ -4,7 +4,7 @@ metadata:
   name: wadam
 spec:
   selector:
-    app: myapp
+    app: wadam
   ports:
   - port: 443
     targetPort: 3000

@@ -17,7 +17,7 @@ function isTripMemberRow(value: unknown): value is TripMemberRow {
   return profiles == null || Array.isArray(profiles)
 }
 
-export async function GET(req: Request, { params }: { params: { trip: string } }) {
+export async function GET(_req: Request, { params }: { params: Promise<{ trip: string }> }) {
   const { trip } = await params
   const supabase = await createClient()
 

@@ -23,7 +23,7 @@ export default function Header() {
 
   async function signInWithDiscord() {
     try {
-      window.location.href = '/signin'
+      window.location.href = '/login'
     } catch (e) {
       console.error(e)
     }

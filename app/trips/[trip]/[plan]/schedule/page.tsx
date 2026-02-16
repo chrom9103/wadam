@@ -4,8 +4,8 @@ import Footer from '../../../../components/Footer'
 import CurrentTimeMarker from '../../../../components/CurrentTimeMarker'
 
 // Dynamic route page: /trips/[trip]/[plan]/schedule
-export default async function SchedulePage({ params }: { params: Promise<{ trip: string; plan: string }> | { trip: string; plan: string } }) {
-  const { trip: tripSlug, plan: planId } = await params
+export default function SchedulePage({ params }: { params: Promise<{ trip: string; plan: string }> }) {
+  const { trip: tripSlug, plan: planId } = React.use(params)
 
   // ITINERARY_ITEMS を想定したモック。schema に合わせて start_time/end_time を ISO 文字列で保持
   const itineraryItems = [

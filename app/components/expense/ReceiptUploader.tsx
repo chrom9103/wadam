@@ -59,9 +59,10 @@ export default function ReceiptUploader({ tripId, onUpload }: Props) {
       const localUrl = URL.createObjectURL(file)
       setPreviewUrl(localUrl)
       onUpload(filePath)
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error)
       console.error("Receipt upload error:", error)
-      alert(`Error uploading receipt: ${error?.message ?? String(error)}`)
+      alert(`Error uploading receipt: ${message}`)
     } finally {
       setUploading(false)
     }

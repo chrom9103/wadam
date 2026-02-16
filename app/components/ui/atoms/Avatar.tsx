@@ -1,5 +1,6 @@
 "use client"
 import React from "react"
+import Image from "next/image"
 
 type Props = {
   name?: string
@@ -28,6 +29,7 @@ function getGradient(name: string) {
 }
 
 export default function Avatar({ name = "?", size = "md", className = "", src }: Props) {
+  const sizePx = size === "sm" ? 32 : size === "md" ? 40 : 48
   const initials = name
     .split(" ")
     .map((s) => s[0])
@@ -39,9 +41,12 @@ export default function Avatar({ name = "?", size = "md", className = "", src }:
 
   if (src) {
     return (
-      <img
+      <Image
         src={src}
         alt={name}
+        width={sizePx}
+        height={sizePx}
+        unoptimized
         className={`${sizes[size]} rounded-full object-cover ring-2 ring-gray-200 ${className}`}
       />
     )

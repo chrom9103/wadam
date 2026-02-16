@@ -1,7 +1,21 @@
 import { createClient } from '@/lib/supabase/server'
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 
-export async function GET(request: NextRequest) {
+type TripMemberRow = {
+  trips: {
+    id: string
+    title: string
+  }[] | null
+}
+
+function isTripMemberRow(value: unknown): value is TripMemberRow {
+  if (!value || typeof value !== "object") return false
+  if (!("trips" in value)) return false
+  const trips = (value as { trips?: unknown }).trips
+  return trips == null || Array.isArray(trips)
+}
+
+export async function GET() {
   const supabase = await createClient()
 
   const {
@@ -29,9 +43,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  const trips = (tripMembers || [])
-    .map((tm: any) => tm.trips)
-    .filter(Boolean)
+  const trips = (Array.isArray(tripMembers) ? tripMembers : [])
+    .filter(isTripMemberRow)
+    .flatMap((row) => row.trips ?? [])
 
   return NextResponse.json({ trips })
 }

@@ -26,8 +26,9 @@ export default function useCreateExpense() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       })
-    } catch (err: any) {
-      setError(err?.message ?? String(err))
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err)
+      setError(message)
       throw err
     } finally {
       setLoading(false)

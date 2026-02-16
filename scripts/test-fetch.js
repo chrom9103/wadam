@@ -9,8 +9,6 @@
     SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... USER_ID=... TRIP_ID=... node scripts/test-fetch.js
 */
 
-const { createClient } = require('@supabase/supabase-js')
-
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
 const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE
 const USER_ID = process.env.USER_ID

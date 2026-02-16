@@ -7,7 +7,7 @@ export function distribute(amount: number, shares: ShareInput[], method: "equal"
   if (method === "equal") {
     const base = Math.floor(amount / n)
     results = shares.map((s) => ({ user_id: s.user_id, amount_owed: base }))
-    let total = base * n
+    const total = base * n
     let remainder = amount - total
     // 余りは payerId があれば最優先で、それ以外は先頭から割当
     while (remainder > 0) {
@@ -26,7 +26,7 @@ export function distribute(amount: number, shares: ShareInput[], method: "equal"
       total += val
       return { user_id: s.user_id, amount_owed: val }
     })
-    let remainder = amount - total
+    const remainder = amount - total
     for (let i = 0; i < remainder; i++) results[i % n].amount_owed += 1
   } else {
     // fixed: assume caller provided correct fixed amounts; if mismatch, attach diff to payer

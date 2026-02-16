@@ -4,17 +4,8 @@ import Footer from '../../../../components/Footer'
 import CurrentTimeMarker from '../../../../components/CurrentTimeMarker'
 
 // Dynamic route page: /trips/[trip]/[plan]/schedule
-export default async function SchedulePage({ params }: { params: Promise<{ trip: string; plan: string }> | { trip: string; plan: string } }) {
-  const { trip: tripSlug, plan: planId } = await params
-
-  // データベース（ER 設計）から取得すると想定するモックデータ
-  const trips = [
-    { id: 'trip-1', slug: 'shigaKogen-spr-2026', title: '志賀高原旅行', start_date: '2026-02-16', end_date: '2026-02-20', created_by: 'user-1' },
-  ]
-
-  const plans = [
-    { id: 'plan-1', trip_id: 'trip-1', title: 'デフォルトプラン', is_default: true },
-  ]
+export default function SchedulePage({ params }: { params: Promise<{ trip: string; plan: string }> }) {
+  const { trip: tripSlug, plan: planId } = React.use(params)
 
   // ITINERARY_ITEMS を想定したモック。schema に合わせて start_time/end_time を ISO 文字列で保持
   const itineraryItems = [

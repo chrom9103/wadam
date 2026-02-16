@@ -1,9 +1,9 @@
 "use client"
 import React, { useMemo, useState } from "react"
-import { useForm, FormProvider } from "react-hook-form"
+import { useForm, FormProvider, useWatch } from "react-hook-form"
 import * as z from "zod"
 import Button from "../ui/atoms/Button"
-import { distribute } from "../../lib/distribute"
+import { distribute, type ShareInput } from "../../lib/distribute"
 import useMembers from "../../hooks/useMembers"
 import useCurrentUser from "../../hooks/useCurrentUser"
 import TripSelectionSection from "./TripSelectionSection"
@@ -67,12 +67,12 @@ export default function ExpenseForm({
     },
   })
 
-  const { watch, handleSubmit, setError, clearErrors, setValue, formState: { errors } } = methods
+  const { handleSubmit, setError, clearErrors, setValue, formState: { errors } } = methods
 
-  const watchTripId = watch("trip_id")
-  const watchAmount = watch("amount")
-  const watchParticipants = watch("participants")
-  const watchSplit = watch("splitMethod")
+  const watchTripId = useWatch({ control: methods.control, name: "trip_id", defaultValue: "" })
+  const watchAmount = useWatch({ control: methods.control, name: "amount", defaultValue: 0 })
+  const watchParticipants = useWatch({ control: methods.control, name: "participants", defaultValue: [] })
+  const watchSplit = useWatch({ control: methods.control, name: "splitMethod", defaultValue: "equal" }) as FormSchema["splitMethod"]
 
   const { members, loading: membersLoading } = useMembers(watchTripId || undefined)
 
@@ -91,18 +91,18 @@ export default function ExpenseForm({
 
   const computedShares = useMemo(() => {
     const parts: string[] = watchParticipants || []
-    let shares = parts.map((id) => ({ user_id: id, ratio: 1 }))
+    let shares: ShareInput[] = parts.map((id) => ({ user_id: id, ratio: 1 }))
 
     if (watchSplit === "ratio") {
       shares = parts.map((id) => ({ user_id: id, ratio: shareInputs[id] ?? 1 }))
     } else if (watchSplit === "fixed") {
-      shares = parts.map((id) => ({ user_id: id, fixed: shareInputs[id] ?? 0 })) as any
+      shares = parts.map((id) => ({ user_id: id, fixed: shareInputs[id] ?? 0 }))
     }
 
     return distribute(
       Number(watchAmount || 0),
-      shares as any,
-      watchSplit as any,
+      shares,
+      watchSplit,
       user?.id
     )
   }, [watchAmount, watchParticipants, watchSplit, user?.id, shareInputs])
@@ -191,13 +191,11 @@ export default function ExpenseForm({
             />
 
             <SplitSelector
-              participants={
-                (watchParticipants || []).map((id: string) => ({
-                  id,
-                  name: members.find((m) => m.id === id)?.name ?? id,
-                })) as any
-              }
-              method={watchSplit as any}
+              participants={(watchParticipants || []).map((id: string) => ({
+                id,
+                name: members.find((m) => m.id === id)?.name ?? id,
+              }))}
+              method={watchSplit}
               values={shareInputs}
               onChange={(userId, value) =>
                 setShareInputs((s) => ({ ...s, [userId]: value }))

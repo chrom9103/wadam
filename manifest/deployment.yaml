@@ -14,6 +14,9 @@ spec:
       containers:
       - name: wadam
         image: wadam
+        envFrom:
+          - secretRef:
+            name: wadam-supabase
         resources:
           limits:
             memory: "128Mi"

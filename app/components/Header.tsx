@@ -1,13 +1,18 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import "./header.css";
 
 const DEFAULT_AVATAR = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36"><rect width="100%" height="100%" rx="18" fill="%23e6eef7"/><text x="50%" y="52%" font-size="16" text-anchor="middle" fill="%2394a3b8" font-family="Arial" dy=".35em">?</text></svg>'
 
+type HeaderUser = {
+  avatar?: string | null
+}
+
 export default function Header() {
   const [showMenu, setShowMenu] = useState(false);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<HeaderUser | null>(null);
 
   useEffect(() => {
     function onKeydown(e: KeyboardEvent) {
@@ -23,7 +28,7 @@ export default function Header() {
 
   async function signInWithDiscord() {
     try {
-      window.location.href = '/login'
+      window.location.href = '/signin'
     } catch (e) {
       console.error(e)
     }
@@ -39,7 +44,7 @@ export default function Header() {
   return (
     <header className="app-header">
       <div className="left">
-        <img alt="Logo" className="logo" src="/favicon.ico" width={24} height={24} />
+        <Image alt="Logo" className="logo" src="/favicon.ico" width={24} height={24} priority />
         <Link href="/">
           <h1 className="title">Wadam</h1>
         </Link>
@@ -76,11 +81,25 @@ export default function Header() {
         <div className="user-wrap">
           {user ? (
             <Link href="/dashboard">
-              <img src={userAvatar} alt="User Avatar" className="avatar" />
+              <Image
+                src={userAvatar}
+                alt="User Avatar"
+                className="avatar"
+                width={36}
+                height={36}
+                unoptimized
+              />
             </Link>
           ) : (
             <button className="avatar-btn" onClick={signInWithDiscord} aria-label="Sign in">
-              <img src={userAvatar} alt="User Avatar" className="avatar" />
+              <Image
+                src={userAvatar}
+                alt="User Avatar"
+                className="avatar"
+                width={36}
+                height={36}
+                unoptimized
+              />
             </button>
           )}
         </div>

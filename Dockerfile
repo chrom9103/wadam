@@ -11,12 +11,12 @@ RUN npm ci
 # --- Stage 2: ビルド (Builder) ---
 FROM node:24-alpine AS builder
 WORKDIR /app
+
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # Next.jsのテレメトリを無効化（任意）
 ENV NEXT_TELEMETRY_DISABLED=1
-
 # ビルド実行
 RUN npm run build
 

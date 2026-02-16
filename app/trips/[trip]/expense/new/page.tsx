@@ -9,10 +9,11 @@ import Header from "../../../../components/Header"
 import Footer from "../../../../components/Footer"
 
 type Props = {
-  params: { trip: string }
+  params: Promise<{ trip: string }>
 }
 
 export default function ExpenseNewPage({ params }: Props) {
+  const { trip } = React.use(params)
   const router = useRouter()
   const { trips, loading: tripsLoading } = useMyTrips()
   const { createExpense, loading: creating } = useCreateExpense()
@@ -25,13 +26,14 @@ export default function ExpenseNewPage({ params }: Props) {
         <ExpenseForm
         trips={trips}
         tripsLoading={tripsLoading}
-        initialTripId={params.trip}
+        initialTripId={trip}
         onSubmit={async (p) => {
           try {
             await createExpense(p)
             router.push(`/trips/${p.trip_id}`)
-          } catch (err: any) {
-            alert("作成に失敗しました: " + (err?.message ?? String(err)))
+          } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : String(err)
+            alert("作成に失敗しました: " + message)
           }
         }}
       />

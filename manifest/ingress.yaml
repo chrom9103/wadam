@@ -5,6 +5,10 @@ metadata:
   labels:
     app.kubernetes.io/name: wadam
 spec:
+  tls:
+    - hosts:
+        - wadam.bn256.dev
+      secretName: wadam-tls
   rules:
   - host: wadam.bn256.dev
     http:

@@ -1,6 +1,4 @@
 import type { Metadata } from "next";
-import Script from "next/script";
-import { headers } from "next/headers";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -24,27 +22,8 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Ensure runtime env injection happens per request.
-  headers();
-
-  const runtimeEnv = {
-    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
-    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:
-      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "",
-    NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL ?? "",
-  };
-
   return (
     <html lang="en">
-      <head>
-        <Script
-          id="runtime-env"
-          strategy="beforeInteractive"
-          dangerouslySetInnerHTML={{
-            __html: `window.__ENV__=${JSON.stringify(runtimeEnv)};`,
-          }}
-        />
-      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

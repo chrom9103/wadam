@@ -88,8 +88,13 @@ jobs:
 
       - name: Commit and push changes
         run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git add manifest/kustomization.yaml
-          git commit -m "chore: update image tag to ${{ needs.build-and-push.outputs.tag }}"
-          git push
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+
+          if git diff --quiet; then
+            echo "No changes"
+          else
+            git add manifest/kustomization.yaml
+            git commit -m "chore: update image tag to ${{ needs.build-and-push.outputs.tag }}"
+            git push origin main
+          fi

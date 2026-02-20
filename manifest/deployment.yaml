@@ -16,7 +16,9 @@ spec:
         image: wadam
         envFrom:
           - secretRef:
-            name: wadam-supabase
+              name: wadam-supabase
+          - secretRef:
+              name: wadam-tls
         resources:
           limits:
             memory: "128Mi"

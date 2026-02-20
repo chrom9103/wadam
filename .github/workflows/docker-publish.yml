@@ -76,6 +76,7 @@ jobs:
         with:
           repository: chrom9103/wadam
           token: ${{ secrets.PAT }}
+          ref: main
 
       - name: Install Kustomize
         run: |

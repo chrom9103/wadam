@@ -7,6 +7,8 @@ resources:
 - ./deployment.yaml
 - ./service.yaml
 - ./ingress.yaml
+- ./sealed-secret/sealed-secret-env.yaml
+- ./sealed-secret/sealed-secret-tls.yaml
 
 images:
 - name: wadam

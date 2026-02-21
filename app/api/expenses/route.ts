@@ -8,7 +8,18 @@ const createExpenseSchema = z.object({
   trip_id: z.string().min(1),
   title: z.string().min(1),
   amount: z.number().positive(),
-  paid_at: z.string().datetime().optional(),
+  paid_at: z
+    .preprocess((val) => {
+      if (val == null || val === "") return undefined
+      if (typeof val === "string") {
+        // Accept plain date strings (YYYY-MM-DD) from <input type="date">
+        if (/^\d{4}-\d{2}-\d{2}$/.test(val)) {
+          return new Date(val).toISOString()
+        }
+      }
+      return val
+    }, z.string().datetime())
+    .optional(),
   shares: z
     .array(
       z.object({

@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
-import { NextResponse } from 'next/server'
+import { apiError, apiOk } from '@/app/lib/api/response'
+import { requireUser } from '@/app/lib/api/guards'
 
 type TripMemberRow = {
   trips: {
@@ -18,12 +19,9 @@ function isTripMemberRow(value: unknown): value is TripMemberRow {
 export async function GET() {
   const supabase = await createClient()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const userResult = await requireUser(supabase)
+  if (!userResult.ok) {
+    return userResult.response
   }
 
   const { data: tripMembers, error } = await supabase
@@ -36,16 +34,16 @@ export async function GET() {
       )
     `
     )
-    .eq('user_id', user.id)
+    .eq('user_id', userResult.data.id)
     .order('created_at', { ascending: false })
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return apiError('INTERNAL', error.message, 500)
   }
 
   const trips = (Array.isArray(tripMembers) ? tripMembers : [])
     .filter(isTripMemberRow)
     .flatMap((row) => row.trips ?? [])
 
-  return NextResponse.json({ trips })
+  return apiOk({ trips })
 }

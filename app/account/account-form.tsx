@@ -1,16 +1,15 @@
 'use client'
 import { useCallback, useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { type User } from '@supabase/supabase-js'
 import Avatar from './avatar'
+import { getProfile as getProfileApi, updateProfile as updateProfileApi } from '@/app/lib/api/client'
 
 export default function AccountForm({ user }: { user: User | null }) {
-  const supabase = createClient()
   const [loading, setLoading] = useState(true)
   const [display_name, setDisplayName] = useState<string | null>(null)
   const [avatar_url, setAvatarUrl] = useState<string | null>(null)
 
-  const getProfile = useCallback(async () => {
+  const loadProfile = useCallback(async () => {
     try {
       if (!user?.id) {
         setLoading(false)
@@ -18,33 +17,21 @@ export default function AccountForm({ user }: { user: User | null }) {
       }
 
       setLoading(true)
+      const data = await getProfileApi()
 
-      const { data, error, status } = await supabase
-        .from('profiles')
-        .select(`display_name, avatar_url`)
-        .eq('id', user?.id)
-        .single()
-
-      if (error && status !== 406) {
-        console.log(error)
-        throw error
-      }
-
-      if (data) {
-        setDisplayName(data.display_name)
-        setAvatarUrl(data.avatar_url)
-      }
+      setDisplayName(data.display_name)
+      setAvatarUrl(data.avatar_url)
     } catch (error) {
       console.error('Error loading user data:', error)
       alert('Error loading user data!')
     } finally {
       setLoading(false)
     }
-  }, [user, supabase])
+  }, [user])
 
   useEffect(() => {
-    getProfile()
-  }, [user, getProfile])
+    loadProfile()
+  }, [user, loadProfile])
 
   async function updateProfile({
     display_name,
@@ -59,14 +46,10 @@ export default function AccountForm({ user }: { user: User | null }) {
       }
 
       setLoading(true)
-
-      const { error } = await supabase.from('profiles').upsert({
-        id: user.id,
+      await updateProfileApi({
         display_name,
         avatar_url,
-        updated_at: new Date().toISOString(),
       })
-      if (error) throw error
       alert('Profile updated!')
     } catch (error) {
       console.error('Error updating the data:', error)

@@ -1,6 +1,6 @@
 "use client"
 import { useState, useEffect } from "react"
-import { fetchJson } from "../lib/http"
+import { getMyTrips } from "@/app/lib/api/client"
 import type { Trip } from "../types"
 
 export default function useMyTrips() {
@@ -10,8 +10,8 @@ export default function useMyTrips() {
 
   useEffect(() => {
     const controller = new AbortController()
-    fetchJson<{ trips: Trip[] }>("/api/trips/my", { signal: controller.signal })
-      .then((data) => setTrips(data.trips ?? []))
+    getMyTrips(controller.signal)
+      .then((data) => setTrips(data))
       .catch((err) => {
         if (err?.name !== "AbortError") {
           setError(err?.message ?? String(err))

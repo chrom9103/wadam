@@ -1,6 +1,6 @@
 "use client"
 import { useState, useEffect } from "react"
-import { fetchJson } from "../lib/http"
+import { getTripMembers } from "@/app/lib/api/client"
 import type { Member } from "../types"
 
 export default function useMembers(tripId?: string) {
@@ -19,13 +19,11 @@ export default function useMembers(tripId?: string) {
       .then(() => {
         setLoading(true)
         setError(null)
-        return fetchJson<{ members: Member[] }>(`/api/trips/${tripId}/members`, {
-          signal: controller.signal,
-        })
+        return getTripMembers(tripId, controller.signal)
       })
       .then((data) => {
         if (!controller.signal.aborted) {
-          setMembers(data.members ?? [])
+          setMembers(data)
         }
       })
       .catch((err) => {

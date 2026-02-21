@@ -1,9 +1,9 @@
 "use client"
 import React from "react"
-import type { User } from "@supabase/supabase-js"
+import type { CurrentUser } from "@/app/lib/api/client"
 
 type Props = {
-  user: User | null
+  user: CurrentUser | null
   loading: boolean
 }
 

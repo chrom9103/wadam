@@ -1,7 +1,7 @@
 "use client"
 import React, { useEffect, useState, useId } from "react"
 import Image from "next/image"
-import { createClient } from "@/lib/supabase/client"
+import { uploadReceipt as uploadReceiptApi } from "@/app/lib/api/client"
 
 type Props = {
   tripId?: string | null
@@ -9,7 +9,6 @@ type Props = {
 }
 
 export default function ReceiptUploader({ tripId, onUpload }: Props) {
-  const supabase = createClient()
   const inputId = useId()
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
@@ -47,18 +46,11 @@ export default function ReceiptUploader({ tripId, onUpload }: Props) {
         throw new Error("ファイルサイズが大きすぎます。")
       }
 
-      const safeName = file.name.replace(/[^\w.\-]/g, "_")
-      const filePath = `${tripId}/${crypto.randomUUID()}-${safeName}`
-
-      const { error: uploadError } = await supabase.storage
-        .from("receipts")
-        .upload(filePath, file, { upsert: false, contentType: file.type })
-
-      if (uploadError) throw uploadError
+      const uploaded = await uploadReceiptApi(tripId, file)
 
       const localUrl = URL.createObjectURL(file)
       setPreviewUrl(localUrl)
-      onUpload(filePath)
+      onUpload(uploaded.path)
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error)
       console.error("Receipt upload error:", error)

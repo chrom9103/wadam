@@ -34,3 +34,11 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## API Boundary Rules
+
+- Next.js 16 では `proxy.ts` をセッション更新の入口として使い、`middleware.ts` は併存させない。
+- `'use client'` コンポーネント/フックから `@/lib/supabase/client` を import しない。
+- クライアントは `app/lib/api/client.ts` の関数経由でのみ API を呼ぶ。
+- Supabase への直接アクセス（Auth/DB/Storage）は API Route または server module に限定する。
+- server module には `import "server-only"` を付け、client bundle への混入を防ぐ。

@@ -1,6 +1,7 @@
-import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import type { Member } from "@/app/types"
+import { apiError, apiOk } from "@/app/lib/api/response"
+import { requireTripMember, requireUser } from "@/app/lib/api/guards"
 
 type TripMemberRow = {
   profiles: {
@@ -21,19 +22,15 @@ export async function GET(_req: Request, { params }: { params: Promise<{ trip: s
   const { trip } = await params
   const supabase = await createClient()
 
-  const { data: userResp } = await supabase.auth.getUser()
-  const user = userResp.user
-  if (!user) return NextResponse.json({ error: "unauthenticated" }, { status: 401 })
+  const userResult = await requireUser(supabase)
+  if (!userResult.ok) {
+    return userResult.response
+  }
 
-  const { data: membership, error: memErr } = await supabase
-    .from("trip_members")
-    .select("id")
-    .eq("trip_id", trip)
-    .eq("user_id", user.id)
-    .maybeSingle()
-
-  if (memErr) return NextResponse.json({ error: memErr.message }, { status: 500 })
-  if (!membership) return NextResponse.json({ error: "forbidden" }, { status: 403 })
+  const memberResult = await requireTripMember(supabase, userResult.data.id, trip)
+  if (!memberResult.ok) {
+    return memberResult.response
+  }
 
   const { data: rows, error: rowsErr } = await supabase
     .from("trip_members")
@@ -48,7 +45,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ trip: s
     )
     .eq("trip_id", trip)
 
-  if (rowsErr) return NextResponse.json({ error: rowsErr.message }, { status: 500 })
+  if (rowsErr) return apiError("INTERNAL", rowsErr.message, 500)
 
   const members: Member[] = (Array.isArray(rows) ? rows : [])
     .filter(isTripMemberRow)
@@ -59,5 +56,5 @@ export async function GET(_req: Request, { params }: { params: Promise<{ trip: s
       avatar_url: profile.avatar_url ?? null,
     }))
 
-  return NextResponse.json({ members })
+  return apiOk({ members })
 }

@@ -1,6 +1,6 @@
 "use client"
 import { useState } from "react"
-import { fetchJson } from "../lib/http"
+import { createExpense as createExpenseRequest } from "@/app/lib/api/client"
 import type { Share } from "../types"
 
 export type CreateExpensePayload = {
@@ -21,11 +21,7 @@ export default function useCreateExpense() {
     setLoading(true)
     setError(null)
     try {
-      return await fetchJson<{ id: string }>(`/api/expenses`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      })
+      return await createExpenseRequest(payload)
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err)
       setError(message)

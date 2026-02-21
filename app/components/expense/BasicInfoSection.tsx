@@ -4,10 +4,10 @@ import { Controller, useFormContext } from "react-hook-form"
 import Input from "../ui/atoms/Input"
 import FormField from "../ui/molecules/FormField"
 import PayerInfo from "./PayerInfo"
-import type { User } from "@supabase/supabase-js"
+import type { CurrentUser } from "@/app/lib/api/client"
 
 type Props = {
-  user: User | null
+  user: CurrentUser | null
   userLoading: boolean
 }
 

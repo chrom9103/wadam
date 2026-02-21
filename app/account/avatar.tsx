@@ -1,7 +1,7 @@
 'use client'
 import React, { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import Image from 'next/image'
+import { getSignedDownloadUrl, uploadAvatar as uploadAvatarApi } from '@/app/lib/api/client'
 
 export default function Avatar({
   uid,
@@ -14,20 +14,14 @@ export default function Avatar({
   size: number
   onUpload: (url: string) => void
 }) {
-  const supabase = createClient()
   const [avatarUrl, setAvatarUrl] = useState<string | null>(url)
   const [uploading, setUploading] = useState(false)
 
   useEffect(() => {
-    async function downloadImage(path: string) {
+    async function resolveImage(path: string) {
       try {
-        const { data, error } = await supabase.storage.from('avatars').download(path)
-        if (error) {
-          throw error
-        }
-
-        const url = URL.createObjectURL(data)
-        setAvatarUrl(url)
+        const signedUrl = await getSignedDownloadUrl('avatars', path)
+        setAvatarUrl(signedUrl)
       } catch (error) {
         console.log('Error downloading image: ', error)
       }
@@ -37,10 +31,10 @@ export default function Avatar({
         if (url.startsWith("http")){
             setAvatarUrl(url)
         }else{
-            downloadImage(url)
+        resolveImage(url)
         }
     }
-  }, [url, supabase])
+    }, [url])
 
   const uploadAvatar: React.ChangeEventHandler<HTMLInputElement> = async (event) => {
     try {
@@ -70,16 +64,8 @@ export default function Avatar({
       }
 
       const filePath = `${uid}/${crypto.randomUUID()}.${fileExt}`
-
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(filePath, file, { upsert: false, contentType: file.type })
-
-      if (uploadError) {
-        throw uploadError
-      }
-
-      onUpload(filePath)
+      const uploaded = await uploadAvatarApi(file)
+      onUpload(uploaded.path || filePath)
     } catch (error) {
       console.error('Error uploading avatar:', error)
       alert('Error uploading avatar!')

@@ -33,6 +33,8 @@ export default function Avatar({
         }else{
         resolveImage(url)
         }
+    } else {
+      setAvatarUrl(null)
     }
     }, [url])
 

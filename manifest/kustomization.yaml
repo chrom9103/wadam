@@ -13,4 +13,4 @@ resources:
 images:
 - name: wadam
   newName: ghcr.io/chrom9103/wadam
-  newTag: 1.1.6
+  newTag: 1.2.0
